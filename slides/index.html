@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  
+  <title>QUINE + TAR = QUININE!!</title>
+  
+  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans+Narrow:400,700" />
+  <style type="text/css">
+  /* using Jenn Schiffer's Simple Slides v4.0
+   *   https://github.com/jennschiffer/SimpleSlides
+   * Thank you very much to her!  In the comments below, prior to the content
+   * "I" is Jenn Schiffer.  Once we hit content, "I" is Peter Boothe.
+   *
+   * The following CSS is necessary for making this a presentation and not a
+   * blob of nonsense.  Change it at your own risk. I suggest adding "custom"
+   * css at the end.
+   */
+    .slide { 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      height: 100%; 
+      width: 100%; 
+      padding: 0; 
+      margin: 0; 
+      page-break-after: always;
+    }
+    #navigation { 
+      position: absolute; 
+      bottom: 10px;
+      right: 10px;
+      z-index: 8675309;
+      cursor: pointer; 
+    }
+    #navigation div {
+      display: inline-block;
+      margin: 10px;
+    }
+    #counter { 
+      position: absolute; 
+      top: 10px; 
+      right: 10px; 
+      display: inline-block; 
+    }
+    
+    @media print {
+      .slide {
+        /* not static, just in case slide contents take advantage of positioning */
+        position: relative;
+        display: block !important;
+      }
+      #counter, #navigation {
+        display: none;
+      }
+    }
+    
+    /*  Custom CSS to make the presentation pretty. */
+    body { 
+      font-family: "PT Sans Narrow", sans-serif;
+      color: #6B1834;
+      background-color: beige;
+    }
+
+    a {
+      color: #6d0019;
+    }
+
+    a:hover {
+      color: #AF2754;
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 3px;
+      padding-bottom: 3px;
+      color: beige;
+      text-align: center;
+      font-family: "PT Sans Narrow", sans-serif;
+      background: #6B1834; 
+      line-height: 1;
+    }
+
+    #navigation a {
+      text-decoration: none;
+    }
+  
+    #counter {
+      color: beige;
+    }
+
+    .small {
+      font-size: 75%;
+    }
+  </style>
+
+  
+  <!-- jQuery (required for slides to work) -->
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  
+  <!-- jQuery bbq (from some rando cdn lol ~*live dangerously*~) -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.ba-bbq/1.2.1/jquery.ba-bbq.min.js"></script>
+  
+  <script type="text/javascript">
+    jQuery(document).ready(function($){
+    
+      var ID = {
+        slideshow : 'simpleslides',
+        slide : 'slide',
+        counter : 'counter',
+        navigation : 'navigation',
+        next : 'next',
+        previous : 'previous',
+        current : 'current'
+      },
+      labels = {
+        next : '&rarr;',
+        previous : '&larr;',
+        separator : ' / '
+      };
+  
+      var $slideshow = $('#' + ID.slideshow),
+          $navigation = $('<div>').attr('id','navigation'),
+          $slides = $slideshow.children('div').addClass(ID.slide),
+          $currentSlide,
+          $firstSlide = $slides.first(),
+          $lastSlide = $slides.last();
+    
+      // make sure the last slide doesn't page break while printing.
+      $('head').append( '<style> .slide:nth-child(' + $slides.length + ') { page-break-after: auto }</style>' );
+    
+      // remove non-div children (like html comments which wp wraps in <p> tags)
+      $slideshow.children().not('div').remove();
+      
+      // add navigational arrows and counter
+      $navigation.append($('<a href="#">').attr('id',ID.previous).html(labels.previous));
+      $navigation.append($('<a href="#">').attr('id',ID.next).html(labels.next));
+      $slideshow.append($navigation);
+      $slideshow.append($('<div>').attr('id',ID.counter));
+      
+      var $counter = $('#'+ID.counter),
+          $next = $('#'+ID.next),
+          $previous = $('#'+ID.previous);
+      
+                 
+      /*** FUNCTIONS ***/
+      
+      var updateCounter = function() {
+        // updates the counter
+        $counter.text(slidePointer.current + labels.separator + slidePointer.last);
+      };
+    
+      var updateURL = function() {
+        // updates slide state
+        var currentURL = document.location.toString();
+    
+        if (currentURL.indexOf('#') != 1){
+          currentURL = currentURL.substr(0,currentURL.indexOf('#'));
+        }
+    
+        $.bbq.pushState({ slide: slidePointer.current });
+      };
+      
+      var hideCurrentSlide = function() {
+        // hide the current slide
+        if ( $currentSlide ) {
+          $currentSlide.hide().removeClass(ID.current);
+        }
+      };
+      
+      var nextSlide = function() {
+        // hide current slide
+        hideCurrentSlide();
+        
+        // get the next slide
+        var nextSlide = $currentSlide.next();
+        
+        // not the last slide => go to the next one and increment the counter
+        if ( slidePointer.current != slidePointer.last ) {
+          nextSlide.show().addClass(ID.current);
+          $currentSlide = nextSlide;
+          slidePointer.current++;
+        }
+        else {
+          // is the last slide => go back to the first slide and reset the counter.
+          $firstSlide.show().addClass(ID.current);
+          $currentSlide = $firstSlide;
+          slidePointer.current = 1;
+        }
+        
+        // update counter
+        updateCounter();
+    
+        // update url
+        updateURL();
+      };
+      
+      var previousSlide = function() {
+        // hide current slide
+        hideCurrentSlide();
+        
+        // get the previous slide
+        var prevSlide = $currentSlide.prev();
+        
+        // If not the first slide, go to the previous one and decrement the counter
+        if ( slidePointer.current != 1 ) {
+          prevSlide.show().addClass(ID.current);
+          $currentSlide = prevSlide;
+          slidePointer.current--;
+        }
+        else {
+          // This must be the first slide, so go back to the last slide and set the counter.
+          $lastSlide.show().addClass(ID.current);
+          $currentSlide = $lastSlide;
+          slidePointer.current = slidePointer.last;
+        }
+        
+        // update counter       
+        updateCounter();  
+    
+        // update URL
+        updateURL();
+      };
+    
+      var goToSlide = function(slideNumber) {
+        // hide current slide
+        hideCurrentSlide();
+        moveToSlide = slideNumber-1;
+    
+        $currentSlide = $slides.eq(moveToSlide);
+        $currentSlide.show().addClass(ID.current);
+        slidePointer.current = slideNumber;
+    
+        // update counter
+        updateCounter();
+      }
+      
+    
+      /*** INIT SLIDESHOW ***/
+      
+      // Initially hide all slides
+      $slides.hide();
+      
+      // The first slide is number first, last is slides length
+      var slidePointer = {
+        current : 1,
+        last : $slides.length
+      };
+    
+      var slideState = parseInt($.bbq.getState('slide'));
+    
+      if ( slideState && (slideState > 0 && slideState <= $slides.length )) {
+        // if slide= hash state is given and valid, go to that slide
+        goToSlide(slideState);
+      }
+      else {
+        // The first slide is the first slide, so make visible and set the counter...
+        $currentSlide = $firstSlide.show().addClass(ID.current);
+        updateCounter();
+      }
+      
+      
+      /*** EVENTS ***/
+      
+      // "next" arrow clicked => next slide
+      $next.click( function(e){ 
+        e.preventDefault();
+        nextSlide();
+      });
+      
+      // "previous" arrow clicked => previous slide
+      $previous.click( function(e){ 
+        e.preventDefault();
+        previousSlide() 
+      });
+      
+      // Add keyboard shortcuts for changing slides
+      $(document).keydown(function(e){
+        if (e.which == 39) { 
+          // right key pressed => next slide
+          nextSlide();
+          return false;
+        }
+        else if (e.which == 37) {
+            // left or l key pressed => previous slide
+            previousSlide();
+            return false;
+          }
+      });
+                 
+    }); 
+  </script>
+
+</head>
+
+<!-- The one parent element must have an ID of #simpleslides -->
+<body id="simpleslides">  
+  
+  <div>
+    <h1>QUINE + TAR = QUININE!!</h1>
+    <a href="http://americanhistory.si.edu/collections/search/object/nmah_716278"><img src="quackmeds.jpg" style="float:right; height:100%" alt=""></a>
+      
+    <blockquote>&ldquo;Quines are self-printing programs. Every program can [be made to] print out its own source code, and storage has become exceedingly cheap. So, we introduce Quinine, a library that uses fixed points, analytic philosophy, and tape storage tools to make open-source programs that carry their source code with themselves.&rdquo;</blockquote>
+    <p>Peter Boothe, <a href="http://bangbangcon.com">!!Con 2015</a>.  Get it at <a href="http://github.com/pboothe/quinine">http://github.com/pboothe/quinine</a></p>
+  </div>
+
+  <div>
+    <h1>Quines</h1>
+    <a href="https://www.flickr.com/photos/40003485@N07/5536522038/"><img src="wvquine.jpg" style="float:right; height: 100%" alt=""></a>
+      <ul>
+        <li>Named after analytic philosopher Willard Van Orman Quine (1908-2000), who studied indirect self-reference (among other things)
+        <li>Programs that print out their own source code
+        <li>Fixed-points of the <code>compile_and_run(s)</code> function (a.k.a. <code>eval(s)</code>)
+        <li>A fun challenge: write a program that prints out its own source code! (the quotation marks are usually the tricky part)
+        <li><b>The following quotation twice, the second time in quotes: "The following quotation twice, the second time in quotes:"</b>
+        <li><pre>q = '"""'
+s = """q = '{q}'
+s = {q}{s}{q}
+print s.format(q=q, s=s)"""
+print s.format(q=q, s=s)</pre>
+      </ul>
+  </div>
+
+  <div>
+    <h1>Every program can be &ldquo;quinified&rdquo;</h1>
+<a href="http://www.amazon.ca/Introduction-Theory-Computation-Michael-Sipser/dp/053494728X"><img src="sipser.jpg" style="float:right; height:100%" alt="Introduction to Theory of Computation by Michael Sipser"></a>
+    <p>A direct consequence of Kleene's Second Recursion Theorem, which states:<blockquote>For any partial recursive function <i>Q(x,y)</i>, there is an index <i>p</i> such that <i>&phi;<sub>p</sub>&nbsp;&cong;&nbsp;&lambda;y.Q(p,y)</i></blockquote>
+    <p>In this notation, <i>p</i> is the program and <i>&phi;<sub>p</sub></i> is its behavior.  Quines come about from applying this theorem to the function <i>Q(x,y) = x</i>.
+
+    <p class="small">Kleene pronounced his last name /klay'nee/.<blockquote class="small">&ldquo;As far as I am aware this pronunciation is incorrect in all known languages. I believe that this novel pronunciation was invented by my father.&rdquo; -Ken Kleene [<a href="http://foldoc.org/script/foldoc/Stephen%20Kleene">FOLDOC</a>]</blockquote>
+  </div>
+
+  <div>
+    <h1>Cheater Quines</h1>
+    <a href="http://homestarrunner.com"><img src="cheat.png" style="float:right" alt=""></a>
+    <ul>
+      <li>For languages which print out the final value, all values are quines.  e.g. for scheme <code>'hello</code> and <code>nil</code> are cheater quines.
+      <li>For compiled languages, you can hijack the compile part of the compile-run cycle and feed the error messages back in until you find a loop.  For clang on OSX, <pre>
+Undefined symbols for architecture x86_64:
+  "_main", referenced from:
+     implicit entry/start for main executable
+ld: symbol(s) not found for architecture x86_64
+clang: error: linker command failed with exit code 1 (use -v to see invocation)</pre> is a cheater quine.
+      <li>For python, if you run your program like <code>python &lt; program.py</code>, then <pre>  File "&lt;stdin&gt;", line 1
+    File "&lt;stdin&gt;", line 1
+    ^
+IndentationError: unexpected indent</pre> is a cheater quine
+      <li>For interpreted languages, you can open the file referenced by <code>argv[0]</code>, because those languages already carry their code with themselves.
+    </ul>
+  </div>
+
+  <div>
+    <h1>Storage has become cheap</h1>
+    <a href="http://www.jcmit.com/memoryprice.htm"><img src="cheap.jpg" style="height: 85%"></a>
+  </div>
+
+  <div>
+    <h1>Tape</h1>
+    <a href="http://en.wikipedia.org/wiki/Tape_library#/media/File:NDOC_magnetic_tape_library.jpg"><img src="tapes.jpg" style="float:right;width:50%" alt=""></a>
+    <ul>
+      <li>The cheapest storage medium of all
+      <li>A giant pain to work with
+      <li>One big file, stored in order on a giant tape
+      <li><code>tar</code>, the <b>t</b>ape <b>ar</b>chiver, is a tool for storing many files in one file  
+      <li>Just write one big file to the tape, but the file is a <code>.tar</code> file and contains multitudes
+    </ul>
+  </div>
+
+  <div>
+    <h1>QUININE!!</h1>
+    <a href="http://commons.wikimedia.org/wiki/File:Samples_of_cinchona_bark,_Quinquina_Route_Equateur,_prepared_Wellcome_L0058850.jpg"><img src="bark.jpg" style="float:right;height:100%" alt=""></a>
+    <ul>
+      <li>A program that quinifies your codebase: <code>quinine.sh</code> will produce <code>quinine.h</code> and <code>quinine.c</code> (or possibly <code>quinine.py</code>, depending on the arguments passed in).
+      <li>Creates a library function <code>quinine_print_src()</code> that prints a string that reproduces the surrounding codebase.
+      <li>Question: How does it make one string represent multiple files?
+<blockquote>That's where the <code>tar</code> comes in!</blockquote>
+      <li>Question: How do you make sure all characters in the string are printable so you don't have to escape anything in the string?
+<blockquote>That's where <code>base64enc</code> comes in!</blockquote>
+    </ul>
+  </div>
+
+  <div>
+      <h1>All in pursuit of a middling pun</h1>
+      <a href="https://books.google.com/books?id=ik8EAAAAMBAJ&amp;pg=PA85&amp;lpg=PA85&amp;dq=quinine+tar&amp;source=bl&amp;ots=s2W979lVRz&amp;sig=ClMxSzw3g6LHhexSxR-R8OIv6Yw&amp;hl=en&amp;sa=X&amp;ei=YodGVe2kHKPlsATIuoCoDw&amp;ved=0CDMQ6AEwAw#v=onepage&amp;q=quinine%20tar&amp;f=false"><img src="quinine_life.png" style="width:100%" alt="[an article about producing quinine from coal tar]"></a>
+  </div>
+
+  <div>
+    <h1>Demonstration!</h1>
+    <p>This page intentionally not quite left blank.
+  </div>
+
+  <div>
+    <h1>QUINE + TAR = QUININE!!</h1>
+        <a href="http://americanhistory.si.edu/collections/search/object/nmah_716278"><img src="quackmeds.jpg" style="float:right; height:100%" alt=""></a>
+          
+        <blockquote>&ldquo;Quines are self-printing programs. Every program can [be made to] print out its own source code, and storage has become exceedingly cheap. So, we introduce Quinine, a library that uses fixed points, analytic philosophy, and tape storage tools to make open-source programs that carry their source code with themselves.&rdquo;</blockquote>
+        <p>Peter Boothe, <a href="http://bangbangcon.com">!!Con 2015</a>.  Get it at <a href="http://github.com/pboothe/quinine">http://github.com/pboothe/quinine</a></p>
+        <p style="font-size: 300%">Quinine: Quines made from tar.</p>
+  </div>
+</body>
+</html>
