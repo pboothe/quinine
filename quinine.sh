@@ -59,13 +59,11 @@ in
     fi
     if [ "x${CODE}" = x ]; then
       CODE=quinine.c
-    fi
-    true;;
+    fi;;
   python)
     if [ "x${CODE}" = x ]; then
       CODE=quinine.py
-    fi
-    true;;
+    fi;;
   *)
     ERROR=1;;
 esac
