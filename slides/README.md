@@ -4,17 +4,19 @@
 
 Peter Boothe, !!Con 2015.
 
-#Quines</h1>
+#Quines
 * Named after analytic philosopher Willard Van Orman Quine (1908-2000), who studied indirect self-reference (among other things)
 * Programs that print out their own source code
 * Fixed-points of the `compile_and_run(s)` function (a.k.a. `eval(s)`)
 * A fun challenge: write a program that prints out its own source code! (the quotation marks are usually the tricky part)
 * The following quotation twice, the second time in quotes: "The following quotation twice, the second time in quotes:"
+```
     q = '"""'
     s = """q = '{q}'
     s = {q}{s}{q}
     print s.format(q=q, s=s)"""
     print s.format(q=q, s=s)
+```
 
 #Every program can be "quinified"
 
@@ -38,11 +40,12 @@ is a cheater quine.
 
 * For python, if you run your program like `python < program.py`, then 
 ```
-      File "&lt;stdin&gt;", line 1
-        File "&lt;stdin&gt;", line 1
+      File "<stdin>", line 1
+        File "<stdin>", line 1
         ^
-    IndentationError: unexpected indent</pre> is a cheater quine
+    IndentationError: unexpected indent
 ```
+is a cheater quine
 * For interpreted languages, you can open the file referenced by `argv[0]`, because those languages already carry their code with themselves.
 
 #Storage has become cheap
