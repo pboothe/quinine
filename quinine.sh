@@ -134,7 +134,7 @@ EOF
     (
       echo "#include <stdio.h>"
       echo
-      printf "static char* ${FUNCTION}_string = "
+      echo "static char *${FUNCTION}_string = "
       tar cz $* | base64 -b 70 | sed -e 's/^/      "/' -e 's/$/"/'
       echo "    ;"
       echo
